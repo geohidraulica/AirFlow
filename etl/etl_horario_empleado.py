@@ -10,6 +10,7 @@ def read_source(spark):
             .option("url", CONFIG["fuxion"]['url']) \
             .option("user", CONFIG["fuxion"]['user']) \
             .option("password", CONFIG["fuxion"]['pass']) \
+            .option("driver", CONFIG["sql"]["driver"]) \
             .option("query", 
             """
                 SELECT

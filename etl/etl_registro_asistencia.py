@@ -8,6 +8,7 @@ def read_source(spark):
         .option("url", CONFIG["garita"]['url']) \
         .option("user", CONFIG["garita"]['user']) \
         .option("password", CONFIG["garita"]['pass']) \
+        .option("driver", CONFIG["sql"]["driver"]) \
         .option("query", """
         SELECT 
         idregasis, 
@@ -28,6 +29,7 @@ def read_dest(spark):
         .option("url", CONFIG["fuxion"]['url']) \
         .option("user", CONFIG["fuxion"]['user']) \
         .option("password", CONFIG["fuxion"]['pass']) \
+        .option("driver", CONFIG["sql"]["driver"]) \
         .option("query", """
         SELECT 
         idregasis, 
