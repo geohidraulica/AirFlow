@@ -1,3 +1,63 @@
 config/secrets.env
 
 #git rm --cached secrets.env
+
+
+# Ignorar carpetas de cache de Python
+__pycache__/
+*.pyc
+
+# tree -L 3 /opt/etl/AirFlow
+
+
+# /opt/etl/AirFlow
+# ├── config
+# │   ├── secrets.env
+# │   ├── settings.py
+# │   └── sqlserver.py
+# ├── dag
+# │   ├── dag_estado_almacen.py
+# │   ├── dag_estado_item.py
+# │   ├── dag_estado_oc.py
+# │   ├── dag_fact_compras.py
+# │   ├── dag_flujo_compra.py
+# │   ├── dag_forma_pago.py
+# │   ├── dag_master_compras.py
+# │   ├── dag_moneda.py
+# │   ├── dag_operational_empleado.py
+# │   ├── dag_personal.py
+# │   ├── dag_producto.py
+# │   ├── dag_proveedor.py
+# │   ├── dag_site.py
+# │   ├── dag_tipo_proyecto.py
+# │   ├── dag_tipo_requerimiento.py
+# ├── etl
+# │   ├── etl_empleado.py
+# │   ├── etl_horario_empleado.py
+# │   ├── etl_registro_asistencia.py
+# ├── pipelines
+# │   ├── dimensions
+# │   │   ├── dim_estado_almacen
+# │   │   ├── dim_estado_item
+# │   │   ├── dim_estado_oc
+# │   │   ├── dim_flujo_compra
+# │   │   ├── dim_forma_pago
+# │   │   ├── dim_moneda
+# │   │   ├── dim_personal
+# │   │   ├── dim_producto
+# │   │   ├── dim_proveedor
+# │   │   ├── dim_site
+# │   │   ├── dim_tiempo
+# │   │   ├── dim_tipo_proyecto
+# │   │   └── dim_tipo_requerimiento
+# │   ├── facts
+# │   │   ├── fact_compras
+# │   └── operational
+# │       ├── mtto
+# │       └── rrhh
+# └── utils
+#     ├── clear_text.py
+#     ├── export_csv.py
+#     ├── path_csv.py
+#     ├── spark_client.py
+#     └── stream_load.py
