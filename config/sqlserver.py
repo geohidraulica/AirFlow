@@ -1,11 +1,8 @@
-# load/facts/fact_compras/connections.py
-
 import pyodbc
 
-
 class SQLServerConnector:
+
     def __init__(self, config: dict):
-        self.config = config
         self.conn_str = (
             "DRIVER={ODBC Driver 18 for SQL Server};"
             f"SERVER={config['server']};"
@@ -15,7 +12,7 @@ class SQLServerConnector:
             "Encrypt=yes;"
             "TrustServerCertificate=yes;"
         )
-        
+
     # -------------------------
     # Conexión base
     # -------------------------
@@ -23,31 +20,38 @@ class SQLServerConnector:
         return pyodbc.connect(self.conn_str)
 
     # -------------------------
-    # SELECT
+    # SELECT → DEVUELVE dict
     # -------------------------
     def fetch_all(self, query: str, params=None):
         conn = self.connect()
         cursor = conn.cursor()
         cursor.execute(query, params or [])
-        rows = cursor.fetchall()
+
+        columns = [col[0] for col in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
         conn.close()
         return rows
 
     # -------------------------
     # INSERT / UPDATE / DELETE
     # -------------------------
-    def execute(self, query: str, params=None, commit=True):
+    def execute(self, query: str, params=None):
         conn = self.connect()
         cursor = conn.cursor()
         cursor.execute(query, params or [])
+        conn.commit()
+        conn.close()
 
-        if commit:
-            conn.commit()
-
+    def executemany(self, query: str, params: list):
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.executemany(query, params)
+        conn.commit()
         conn.close()
 
     # -------------------------
-    # TRANSACCIONES
+    # TRANSACCIONES (OPCIONAL)
     # -------------------------
     def begin(self):
         conn = self.connect()

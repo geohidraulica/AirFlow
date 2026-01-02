@@ -1,45 +1,43 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, sha2, concat_ws
 from config.sqlserver import SQLServerConnector
-from pyspark.sql import SparkSession
+
 
 class SparkManager:
-    def __init__(self, app_name, jars=None):
+    """
+    Gestiona operaciones Spark para ETL:
+    - Lectura JDBC
+    - Inserción
+    - Update / Delete incremental
+    - Merge lógico mediante hash
+    """
+
+    def __init__(self, app_name: str, jars: str | None = None):
+        """
+        Inicializa la SparkSession y reduce el nivel de logging.
+        """
         builder = SparkSession.builder.appName(app_name)
+
         if jars:
             builder = builder.config("spark.jars", jars)
+
         self.spark = builder.getOrCreate()
 
+        # Reducir ruido de logs (importante para performance del driver)
+        self.spark.sparkContext.setLogLevel("ERROR")
 
-    # def insert_data(self, df_insert, table_name, url, jdbc_props):
-    #     if df_insert.count() > 0:
-    #         columnas_insert = [c for c in df_insert.columns if c != "hash"]
-    #         df_insert.select(*columnas_insert).write.jdbc(
-    #             url=url,
-    #             table=table_name,
-    #             mode="append",
-    #             properties=jdbc_props
-    #         )
-
-    # def insert_all(self, df_insert, table_name, url, jdbc_props):
-    #     if df_insert.rdd.isEmpty():
-    #         return
-    #     df_insert.write.jdbc(
-    #         url=url,
-    #         table=table_name,
-    #         mode="append",
-    #         properties=jdbc_props
-    #     )
-
-    def insert_data(self, df, table_name, url, jdbc_props):
+    # ------------------------------------------------------------------
+    # INSERT
+    # ------------------------------------------------------------------
+    def insert_data(self, df, table_name: str, url: str, jdbc_props: dict):
+        """
+        Inserta datos vía JDBC ignorando la columna hash si existe.
+        """
         if df.rdd.isEmpty():
             return
 
-        columnas = df.columns
-
-        if "hash" in columnas:
-            columnas = [c for c in columnas if c != "hash"]
-            df = df.select(*columnas)
+        if "hash" in df.columns:
+            df = df.drop("hash")
 
         df.write.jdbc(
             url=url,
@@ -48,84 +46,181 @@ class SparkManager:
             properties=jdbc_props
         )
 
-
-    def update_data(self, df_update, table_name, key_columns, sql_connector: SQLServerConnector):
-        if df_update.count() == 0:
+    # ------------------------------------------------------------------
+    # UPDATE
+    # ------------------------------------------------------------------
+    def update_data(
+        self,
+        df_update,
+        table_name: str,
+        key_columns: list[str],
+        sql_connector: SQLServerConnector
+    ):
+        """
+        Actualiza registros existentes usando UPDATE dinámico.
+        Mantiene lógica row-by-row (incremental).
+        """
+        if df_update.rdd.isEmpty():
             return
-        
+
         conn, cursor = sql_connector.begin()
+
         try:
-            for row in df_update.collect():
+            for row in df_update.toLocalIterator():
                 row_dict = row.asDict()
-                updates = {k: v for k, v in row_dict.items() if k not in key_columns + ["hash"]}
-                if updates:
-                    set_clause = ", ".join(f"{k}=?" for k in updates)
-                    params = list(updates.values()) + [row_dict[k] for k in key_columns]
-                    where_clause = " AND ".join(f"{k}=?" for k in key_columns)
-                    sql = f"UPDATE {table_name} SET {set_clause} WHERE {where_clause}"
-                    cursor.execute(sql, params)
+
+                updates = {
+                    k: v for k, v in row_dict.items()
+                    if k not in key_columns and k != "hash"
+                }
+
+                if not updates:
+                    continue
+
+                set_clause = ", ".join(f"{k}=?" for k in updates)
+                where_clause = " AND ".join(f"{k}=?" for k in key_columns)
+
+                params = (
+                    list(updates.values()) +
+                    [row_dict[k] for k in key_columns]
+                )
+
+                sql = f"""
+                    UPDATE {table_name}
+                    SET {set_clause}
+                    WHERE {where_clause}
+                """
+
+                cursor.execute(sql, params)
+
             sql_connector.commit(conn)
-        except Exception as e:
+
+        except Exception:
             sql_connector.rollback(conn)
             raise
 
-    def delete_data(self, df_delete, table_name, key_columns, sql_connector: SQLServerConnector, batch_size=500):
-        if df_delete.count() == 0:
+    # ------------------------------------------------------------------
+    # DELETE
+    # ------------------------------------------------------------------
+    def delete_data(
+        self,
+        df_delete,
+        table_name: str,
+        key_columns: list[str],
+        sql_connector: SQLServerConnector,
+        batch_size: int = 500
+    ):
+        """
+        Elimina registros por lotes usando IN compuesto.
+        """
+        if df_delete.rdd.isEmpty():
             return
-        
-        delete_ids = [tuple(row[k] for k in key_columns) for row in df_delete.collect()]
+
         conn, cursor = sql_connector.begin()
+
         try:
-            for i in range(0, len(delete_ids), batch_size):
-                batch = delete_ids[i:i+batch_size]
-                placeholders = ",".join("(" + ",".join("?"*len(key_columns)) + ")" for _ in batch)
-                flat_values = [v for tup in batch for v in tup]
-                sql = f"DELETE FROM {table_name} WHERE ({','.join(key_columns)}) IN ({placeholders})"
-                cursor.execute(sql, flat_values)
+            batch = []
+
+            for row in df_delete.toLocalIterator():
+                batch.append(tuple(row[k] for k in key_columns))
+
+                if len(batch) == batch_size:
+                    self._execute_delete_batch(cursor, table_name, key_columns, batch)
+                    batch.clear()
+
+            if batch:
+                self._execute_delete_batch(cursor, table_name, key_columns, batch)
+
             sql_connector.commit(conn)
-        except Exception as e:
+
+        except Exception:
             sql_connector.rollback(conn)
             raise
 
-    def read_table(self, source_config, query, driver):
-        return self.spark.read \
-            .format("jdbc") \
-            .option("url", source_config['url']) \
-            .option("user", source_config['user']) \
-            .option("password", source_config['pass']) \
-            .option("driver", driver['driver']) \
-            .option("query", query) \
-            .load()
+    def _execute_delete_batch(self, cursor, table_name, key_columns, batch):
+        """
+        Ejecuta un DELETE por lote.
+        """
+        placeholders = ",".join(
+            "(" + ",".join("?" * len(key_columns)) + ")"
+            for _ in batch
+        )
 
-    def rename_columns(self, df, column_mapping):
+        flat_values = [v for row in batch for v in row]
+
+        sql = f"""
+            DELETE FROM {table_name}
+            WHERE ({','.join(key_columns)}) IN ({placeholders})
+        """
+
+        cursor.execute(sql, flat_values)
+
+    # ------------------------------------------------------------------
+    # READ
+    # ------------------------------------------------------------------
+    def read_table(self, source_config: dict, query: str, driver: dict):
+        """
+        Lee datos desde SQL Server vía JDBC.
+        """
+        return (
+            self.spark.read
+            .format("jdbc")
+            .option("url", source_config["url"])
+            .option("user", source_config["user"])
+            .option("password", source_config["pass"])
+            .option("driver", driver["driver"])
+            .option("query", query)
+            .load()
+        )
+
+    # ------------------------------------------------------------------
+    # TRANSFORMACIONES
+    # ------------------------------------------------------------------
+    @staticmethod
+    def rename_columns(df, column_mapping: dict):
+        """
+        Renombra columnas según un mapping origen → destino.
+        """
         for orig, dest in column_mapping.items():
             if orig != dest:
                 df = df.withColumnRenamed(orig, dest)
         return df
 
-    def add_hash_column(self, df, columnas):
-        return df.withColumn("hash", sha2(concat_ws("|", *[col(c) for c in columnas]), 256))
+    @staticmethod
+    def add_hash_column(df, columns: list[str]):
+        """
+        Agrega columna hash SHA-256 para comparación de cambios.
+        """
+        return df.withColumn(
+            "hash",
+            sha2(concat_ws("|", *[col(c) for c in columns]), 256)
+        )
 
     def merge_data(self, df_source, df_dest, key_columns, column_mapping):
-        # 1. Renombrar columnas según el mapping
-        df_source_renamed = self.rename_columns(df_source, column_mapping)
+        """
+        Realiza un merge lógico FULL OUTER JOIN con hash.
+        """
+        df_src = self.rename_columns(df_source, column_mapping)
 
-        # 2. Columnas destino para hash
         columnas_destino = list(column_mapping.values())
 
-        # 3. Agregar hash
-        df_source_h = self.add_hash_column(df_source_renamed, columnas_destino)
+        df_src_h = self.add_hash_column(df_src, columnas_destino)
         df_dest_h = self.add_hash_column(df_dest, columnas_destino)
 
-        # 4. Merge con full outer join
-        df_merged = df_source_h.alias("src").join(
+        return df_src_h.alias("src").join(
             df_dest_h.alias("dest"),
             on=key_columns,
             how="full"
         )
-        return df_merged
-    
-    def execute_sql(self, sql, sql_connector):
+
+    # ------------------------------------------------------------------
+    # SQL UTIL
+    # ------------------------------------------------------------------
+    @staticmethod
+    def execute_sql(sql: str, sql_connector: SQLServerConnector):
+        """
+        Ejecuta SQL directo con control transaccional.
+        """
         conn, cursor = sql_connector.begin()
         try:
             cursor.execute(sql)
@@ -134,5 +229,11 @@ class SparkManager:
             sql_connector.rollback(conn)
             raise
 
+    # ------------------------------------------------------------------
+    # STOP
+    # ------------------------------------------------------------------
     def stop(self):
+        """
+        Finaliza la SparkSession.
+        """
         self.spark.stop()

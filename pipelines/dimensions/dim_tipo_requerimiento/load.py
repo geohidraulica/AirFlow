@@ -6,7 +6,7 @@ def load():
     csv_path = extract()
     stream_load(csv_path, COLUMN_MAPPING, TABLA_DESTINO)
 
-if __name__ == "__main__":
-   load()
+# if __name__ == "__main__":
+#    load()
 
 # python3 -m pipelines.dimensions.dim_tipo_requerimiento.load

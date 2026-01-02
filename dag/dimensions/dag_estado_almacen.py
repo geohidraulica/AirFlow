@@ -1,12 +1,12 @@
 from airflow import DAG # type: ignore
 from airflow.operators.python import PythonOperator # type: ignore
 from datetime import datetime
-from pipelines.dimensions.dim_moneda.load import load
+from pipelines.dimensions.dim_estado_almacen.load import load
 
-default_args = {"owner": "airflow", "retries": 1}
+default_args = {"owner": "StarRocks", "retries": 1}
 
 with DAG(
-    dag_id="DimMoneda",
+    dag_id="DimEstadoAlmacen",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
     schedule_interval="*/5 * * * *",
