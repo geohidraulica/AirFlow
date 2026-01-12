@@ -3,18 +3,19 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator # type: ignor
 from datetime import datetime
 
 default_args = {
-    "owner": "airflow",
-    "retries": 1,
+    "owner": "Group",
+    "retries": 0,
 }
 
 with DAG(
     dag_id="MasterCompras",
+    description="Ejecuta todas las tablas relacionadas para el reporte compras",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
     schedule_interval=None,
     catchup=False,
     is_paused_upon_creation=False,
-    tags=["ETL", "StarRocks", "Group"],
+    tags=["Etl", "StarRocks", "Group"],
 ) as dag:
 
     DimEstadoAlmacen = TriggerDagRunOperator(

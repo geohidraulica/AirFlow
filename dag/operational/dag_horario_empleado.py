@@ -12,7 +12,7 @@ with DAG(
     description="Sincronizacion de horario de trabajo de cada empleado",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
-    schedule_interval="*/5 * * * *",
+    schedule_interval= None, #"*/5 * * * *",
     catchup=False,
     is_paused_upon_creation=False,
     tags=["Operational", "Etl", "RRHH"],

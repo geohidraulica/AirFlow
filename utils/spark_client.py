@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, sha2, concat_ws
-from config.sqlserver import SQLServerConnector
+from config.sql_connector import SQLServerConnector
 
 
 class SparkManager:

@@ -1,5 +1,5 @@
 import csv
-from utils.clear_text import clean_text
+from utils.text_cleaner import clean_text
 
 def export_query_to_csv(conn, query, columns, csv_path, delimiter='|'):
     """

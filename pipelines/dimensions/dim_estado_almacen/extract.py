@@ -1,6 +1,6 @@
 from utils.export_csv import export_query_to_csv
 from pipelines.dimensions.dim_estado_almacen.config import TMP_CSV, COLUMN_MAPPING, SELECT_ORIGEN
-from config.sqlserver import SQLServerConnector
+from config.sql_connector import SQLServerConnector
 from config.settings import CONFIG
 
 def extract():

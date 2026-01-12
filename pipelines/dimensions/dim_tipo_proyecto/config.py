@@ -1,4 +1,4 @@
-from utils.path_csv import get_tmp_csv
+from utils.csv_path_manager import get_tmp_csv
 
 JOB_NAME = "dim_tipo_proyecto"
 
@@ -15,6 +15,10 @@ SELECT_ORIGEN = """
         UPPER(nombre) AS nombre
     FROM ma00
     WHERE clasif  = 'TIPROYECTLOG'
+    UNION
+    SELECT 
+    	CAST(0 AS INT) AS codigo,  
+        UPPER('Sin Asignar') AS nombre
 """
 
 TABLA_DESTINO = "DimTipoProyecto"

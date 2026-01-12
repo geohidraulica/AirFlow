@@ -1,4 +1,4 @@
-from utils.path_csv import get_tmp_csv
+from utils.csv_path_manager import get_tmp_csv
 
 JOB_NAME = "dim_personal"
 
@@ -14,10 +14,15 @@ SELECT_ORIGEN = """
     SELECT 
         id_personal,
         TRIM(UPPER(CONCAT(nombres,' ' , apellidos))) as nombres, 
-        TRIM(UPPER(ISNULL(RRHH.empleado.cargo_trab,personal.cargo))) AS F_CARGO
+        '-' AS F_CARGO
     FROM dbo.personal
     LEFT JOIN RRHH.empleado ON RRHH.empleado.dni = dbo.personal.nro_doc
-    WHERE estado = 1
+    UNION
+    SELECT
+        0 AS id_personal,
+        'SIN ASIGNAR' AS nombres,
+        '-' AS F_CARGO
+    --WHERE estado = 1
 """
 
 TABLA_DESTINO = "DimPersonal"

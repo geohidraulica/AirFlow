@@ -3,6 +3,8 @@ import time
 import base64
 import requests
 from config.settings import CONFIG
+from utils.mysql_manager import MySQLManager
+from config.mysql_connector import MySQLConnector
 
 def stream_load(csv_path, columns, table_name):
     """
@@ -17,6 +19,12 @@ def stream_load(csv_path, columns, table_name):
     print("TMP_CSV:", csv_path)
     
     print("Cargando datos a StarRocks (Stream Load)...")
+
+    pyodbc = MySQLManager()
+    mysql = MySQLConnector(CONFIG["starrocks"])
+
+    print(f"Truncando tabla {table_name}...")
+    pyodbc.execute_sql(f"TRUNCATE TABLE {table_name}", mysql)
 
     url = (
         f"http://{CONFIG['starrocks']['server']}:8040"

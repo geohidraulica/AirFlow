@@ -1,6 +1,6 @@
 from pipelines.dimensions.dim_site.config  import COLUMN_MAPPING, TABLA_DESTINO
 from pipelines.dimensions.dim_site.extract import extract
-from utils.stream_load import stream_load
+from utils.starrocks_stream_loader import stream_load
 
 def load():
     csv_path = extract()

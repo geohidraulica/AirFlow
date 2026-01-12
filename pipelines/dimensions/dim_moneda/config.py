@@ -1,4 +1,4 @@
-from utils.path_csv import get_tmp_csv
+from utils.csv_path_manager import get_tmp_csv
 
 JOB_NAME = "dim_moneda"
 

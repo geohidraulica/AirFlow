@@ -1,7 +1,7 @@
 import time
 from config.settings import CONFIG
-from config.sqlserver import SQLServerConnector
-from utils.pyodbc_client import PyODBCManager
+from config.sql_connector import SQLServerConnector
+from utils.sqlserver_manager import PyODBCManager
 from pipelines.operational.rrhh.registro_asistencia.data import (SELECT_ORIGEN, SELECT_DESTINO, COLUMN_MAPPING, TABLA_DESTINO, PRIMARY_KEY)
 
 def load():

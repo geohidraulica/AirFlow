@@ -1,6 +1,6 @@
 import hashlib
 from typing import List, Dict, Any
-from config.sqlserver import SQLServerConnector
+from config.sql_connector import SQLServerConnector
 
 
 class PyODBCManager:

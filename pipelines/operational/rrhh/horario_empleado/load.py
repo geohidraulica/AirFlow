@@ -1,7 +1,7 @@
 import time
 from config.settings import CONFIG
-from config.sqlserver import SQLServerConnector
-from utils.pyodbc_client import PyODBCManager
+from config.sql_connector import SQLServerConnector
+from utils.sqlserver_manager import PyODBCManager
 from pipelines.operational.rrhh.horario_empleado.data import (
     SELECT_ORIGEN,
     COLUMN_MAPPING,
