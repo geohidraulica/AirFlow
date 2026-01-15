@@ -15,7 +15,7 @@ with DAG(
     schedule_interval= None, #"*/5 * * * *",
     catchup=False,
     is_paused_upon_creation=False,
-    tags=["Operational", "Etl", "RRHH"],
+    tags=["Operational"],
 ) as dag:
 
     run_task = PythonOperator(

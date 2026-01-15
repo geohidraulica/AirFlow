@@ -1,5 +1,5 @@
 from utils.export_csv import export_query_to_csv
-from pipelines.dimensions.dim_estado_almacen.config import TMP_CSV, COLUMN_MAPPING, SELECT_ORIGEN
+from pipelines.dimensions.dim_estado_compra.config import TMP_CSV, COLUMN_MAPPING, SELECT_ORIGEN
 from config.sql_connector import SQLServerConnector
 from config.settings import CONFIG
 
@@ -7,7 +7,7 @@ def extract():
 
     connector = SQLServerConnector(CONFIG["fuxion"])
     conn = connector.connect()
-    
+
     query = SELECT_ORIGEN
 
     source_columns = list(COLUMN_MAPPING.keys())

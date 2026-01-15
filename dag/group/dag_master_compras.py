@@ -3,7 +3,7 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator # type: ignor
 from datetime import datetime
 
 default_args = {
-    "owner": "Group",
+    "owner": "StarRocks",
     "retries": 0,
 }
 
@@ -15,7 +15,7 @@ with DAG(
     schedule_interval=None,
     catchup=False,
     is_paused_upon_creation=False,
-    tags=["Etl", "StarRocks", "Group"],
+    tags=["StarRocks", "Group"],
 ) as dag:
 
     DimEstadoAlmacen = TriggerDagRunOperator(

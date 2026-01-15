@@ -12,10 +12,10 @@ with DAG(
     description="ETL de empleados del área de RRHH - Registro de nuevo Personal",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
-    schedule_interval="*/5 * * * *",
+    schedule_interval="0 8-10 * * 1-5",
     catchup=False,
     is_paused_upon_creation=False,
-    tags=["Operational", "Etl", "RRHH"],
+    tags=["Operational"],
 ) as dag:
 
     run_task = PythonOperator(

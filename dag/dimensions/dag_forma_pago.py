@@ -12,7 +12,7 @@ with DAG(
     schedule_interval=None,
     catchup=False,
     is_paused_upon_creation=False,
-    tags=["Etl", "StarRocks", "Dimensiones"],
+    tags=["CMP", "StarRocks", "Dimensiones"],
 ) as dag:
 
     run_task = PythonOperator(
