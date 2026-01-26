@@ -17,7 +17,14 @@ class SQLServerConnector:
     # Conexión base
     # -------------------------
     def connect(self):
-        return pyodbc.connect(self.conn_str)
+        conn = pyodbc.connect(self.conn_str)
+
+        # 🔥 Forzar idioma y semana ISO en ESTA sesión
+        cursor = conn.cursor()
+        cursor.execute("SET LANGUAGE Spanish; SET DATEFIRST 1;")
+        cursor.close()
+
+        return conn
 
     # -------------------------
     # SELECT → DEVUELVE dict

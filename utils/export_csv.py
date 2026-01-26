@@ -1,35 +1,39 @@
 import csv
 from utils.text_cleaner import clean_text
 
+NULL_TOKEN = r"\N"
+
 def export_query_to_csv(conn, query, columns, csv_path, delimiter='|'):
-    """
-    Ejecuta una consulta SQL y exporta el resultado a un CSV.
-    
-    :param conn: Conexión a la base de datos (pyodbc connection)
-    :param query: Consulta SQL a ejecutar
-    :param columns: Lista de columnas en el orden deseado
-    :param csv_path: Ruta del CSV de salida
-    :param delimiter: Separador de columnas (por defecto '|')
-    """
     with conn.cursor() as cursor:
         cursor.execute(query)
-        rows = cursor.fetchall()  # Consumimos todos los resultados de inmediato
+        rows = cursor.fetchall()
 
-        # Abrimos el archivo CSV
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(
                 f,
                 delimiter=delimiter,
-                quoting=csv.QUOTE_NONE,
-                escapechar='\\'
+                quoting=csv.QUOTE_NONE
             )
-            
+
             for row in rows:
                 row_dict = dict(zip(columns, row))
-                # Limpiar texto si es necesario
+
                 for col, value in row_dict.items():
-                    if isinstance(value, str):
-                        row_dict[col] = clean_text(value)
+
+                    # 1️⃣ NULL real
+                    if value is None:
+                        row_dict[col] = NULL_TOKEN
+                        continue
+
+                    # 2️⃣ Normalizar todo a string
+                    value_str = str(value).strip()
+
+                    # 3️⃣ Vacío → NULL
+                    if value_str == "":
+                        row_dict[col] = NULL_TOKEN
+                    else:
+                        row_dict[col] = clean_text(value_str)
+
                 writer.writerow([row_dict[col] for col in columns])
 
     print(f"CSV generado en: {csv_path}")

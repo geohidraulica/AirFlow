@@ -17,22 +17,10 @@ with DAG(
     is_paused_upon_creation=False,
     tags=["StarRocks", "Group"],
 ) as dag:
-
-    DimEstadoAlmacen = TriggerDagRunOperator(
-        task_id="DimEstadoAlmacen",
-        trigger_dag_id="DimEstadoAlmacen",
-        wait_for_completion=True,
-    )
-
-    DimEstadoItem = TriggerDagRunOperator(
-        task_id="DimEstadoItem",
-        trigger_dag_id="DimEstadoItem",
-        wait_for_completion=True,
-    )
-
-    DimEstadoOc = TriggerDagRunOperator(
-        task_id="DimEstadoOc",
-        trigger_dag_id="DimEstadoOc",
+    
+    DimEstadoCompra = TriggerDagRunOperator(
+        task_id="DimEstadoCompra",
+        trigger_dag_id="DimEstadoCompra",
         wait_for_completion=True,
     )
 
@@ -97,9 +85,7 @@ with DAG(
     )
 
     [
-        DimEstadoAlmacen,
-        DimEstadoItem,
-        DimEstadoOc,
+        DimEstadoCompra,
         DimFlujoCompra,
         DimFormaPago,
         DimMoneda,

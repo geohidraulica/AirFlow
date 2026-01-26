@@ -16,6 +16,7 @@ COLUMN_MAPPING = {
     'Dia': 'Dia',
     'NroDiaSemana': 'NroDiaSemana',
     'EsFinSemana': 'EsFinSemana',
+    'NombreMes': 'NombreMes',
 }
 
 SELECT_ORIGEN = """
@@ -45,7 +46,8 @@ SELECT_ORIGEN = """
         CASE 
             WHEN DATENAME(WEEKDAY, Fecha) IN ('sábado','domingo') THEN 'Sí'
             ELSE 'No'
-        END AS EsFinSemana
+        END AS EsFinSemana,
+		DATENAME(MONTH, Fecha) as NombreMes
     FROM Calendario
     OPTION (MAXRECURSION 0);
 

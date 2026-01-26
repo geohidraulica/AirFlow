@@ -12,7 +12,7 @@ with DAG(
     description="Sincronizacion de registro de asistencia de cada empleado",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
-    schedule_interval="0 6-11,17-20 * * 1-5",
+    schedule_interval = "*/2 * * * 1-6",
     catchup=False,
     is_paused_upon_creation=False,
     tags=["Operational"],

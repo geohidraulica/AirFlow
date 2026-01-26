@@ -5,14 +5,14 @@ from datetime import datetime
 from pipelines.operational.rrhh.empleado.load import load
 
 default_args = {"owner": "RRHH", "retries": 1}
-
+# https://crontab.cronhub.io/
 # DAG
 with DAG(
     dag_id="RegistroEmpleado",
     description="ETL de empleados del área de RRHH - Registro de nuevo Personal",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
-    schedule_interval="0 8-10 * * 1-5",
+    schedule_interval = "*/2 * * * 1-6",
     catchup=False,
     is_paused_upon_creation=False,
     tags=["Operational"],
