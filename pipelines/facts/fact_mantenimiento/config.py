@@ -18,7 +18,7 @@ COLUMN_MAPPING = {
 }
 
 SELECT_ORIGEN = """
-        SELECT
+    SELECT
         MTTO.orden_trabajo_det.id_orden_trabajo_det AS F_IDOTDET,
         CAST(ot_fech_sist AS DATE) AS F_REGISTRO_OT,
         MTTO.activos.site_ori,
@@ -33,7 +33,7 @@ SELECT_ORIGEN = """
     INNER JOIN MTTO.orden_trabajo_cab ON MTTO.orden_trabajo_cab.id_orden_trab_cab = MTTO.orden_trabajo_det.id_orden_trab_cab
     INNER JOIN MTTO.activos on MTTO.activos.idactivos = MTTO.orden_trabajo_cab.ot_bomba --AND MTTO.activos.idordentrabajocab_a = MTTO.orden_trabajo_cab.id_orden_trab_cab 
     INNER JOIN MA00 ESTADOOTDET ON ESTADOOTDET.codigo = ISNULL(MTTO.orden_trabajo_det.otd_idestadodet, 1) AND ESTADOOTDET.clasif = 'MTTODESTADET'
-    INNER JOIN ma04 ON ma04.SEQMA04 = MTTO.orden_trabajo_det.otd_prdiddet
+    LEFT JOIN ma04 ON ma04.SEQMA04 = MTTO.orden_trabajo_det.otd_prdiddet
     WHERE orden_trabajo_cab.ot_fech_sist >= '2023-01-01' --AND MTTO.activos.site_destino = '001'
 """
 

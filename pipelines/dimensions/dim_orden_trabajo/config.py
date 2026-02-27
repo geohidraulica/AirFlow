@@ -28,7 +28,7 @@ SELECT_ORIGEN = """
         END AS F_ClasdificacionOt,
         UPPER(ma00estado.nombre) AS F_EstadoOT
     FROM MTTO.orden_trabajo_cab
-    INNER JOIN MTTO.activos on MTTO.activos.idactivos = MTTO.orden_trabajo_cab.ot_bomba --AND MTTO.activos.idordentrabajocab_a = MTTO.orden_trabajo_cab.id_orden_trab_cab 
+    --INNER JOIN MTTO.activos on MTTO.activos.idactivos = MTTO.orden_trabajo_cab.ot_bomba --AND MTTO.activos.idordentrabajocab_a = MTTO.orden_trabajo_cab.id_orden_trab_cab 
     LEFT JOIN PROD.orden_fabri_cab ON PROD.orden_fabri_cab.idordenfabricab = MTTO.orden_trabajo_cab.idordenfabricab_otc
     OUTER APPLY
     (
@@ -41,10 +41,10 @@ SELECT_ORIGEN = """
         GROUP BY PROD.solicixordenfabcab.idordenfabricab_so
     ) AS tsolictud
     INNER JOIN dbo.ma00 ma00estado ON ma00estado.codigo = MTTO.orden_trabajo_cab.ot_estado_general AND ma00estado.clasif = 'MTTESTAOT'
-    WHERE 
+    --WHERE 
     --MTTO.orden_trabajo_cab.ot_idtipoequip IS NOT NULL
     --AND
-    orden_trabajo_cab.ot_fech_sist >= '2023-01-01' --AND MTTO.activos.site_destino = '001'
+    --orden_trabajo_cab.ot_fech_sist >= '2023-01-01' --AND MTTO.activos.site_destino = '001'
 """
 
 TABLA_DESTINO = "DimOrdenTrabajo"

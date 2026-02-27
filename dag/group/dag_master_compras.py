@@ -2,17 +2,17 @@ from airflow import DAG # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator # type: ignore
 from datetime import datetime
+import pendulum # type: ignore
 
-default_args = {
-    "owner": "StarRocks",
-    "retries": 0,
-}
+
+default_args = {"owner": "StarRocks","retries": 0}
+local_tz = pendulum.timezone("America/Lima")
 
 with DAG(
     dag_id="MasterCompras",
     description="Ejecuta todas las tablas relacionadas para el reporte compras",
     default_args=default_args,
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tzinfo=local_tz),
     schedule_interval="0 7,11,15 * * 1-5",
     catchup=False,
     tags=["StarRocks", "Group"],

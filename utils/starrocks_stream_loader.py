@@ -6,24 +6,27 @@ from config.settings import CONFIG
 from utils.mysql_manager import MySQLManager
 from config.mysql_connector import MySQLConnector
 
+
 def stream_load(csv_path, columns, table_name):
     """
-    Carga un CSV a StarRocks usando Stream pipelines.
-    
+    Carga un CSV a StarRocks usando Stream Load.
+
     :param csv_path: Ruta del archivo CSV a cargar
     :param columns: Lista de nombres de columnas en el CSV
     :param table_name: Nombre de la tabla destino en StarRocks
     """
-    start_time = time.time()   # ⏱ inicio
 
-    print("TMP_CSV:", csv_path)
-    
-    print("Cargando datos a StarRocks (Stream Load)...")
+    # ⏱ Inicio medición precisa
+    start_time = time.perf_counter()
+
+    # print("TMP_CSV:", csv_path)
+    # print("Cargando datos a StarRocks (Stream Load)...")
 
     pyodbc = MySQLManager()
     mysql = MySQLConnector(CONFIG["starrocks"])
 
-    print(f"Truncando tabla {table_name}...")
+    # print(f"Truncando tabla {table_name}...")
+    
     pyodbc.execute_sql(f"TRUNCATE TABLE {table_name}", mysql)
 
     url = (
@@ -39,7 +42,11 @@ def stream_load(csv_path, columns, table_name):
         "label": f"{table_name}_{int(time.time())}",
         "format": "csv",
         "column_separator": "|",
-        "columns": ",".join(columns.values()),
+        "strict_mode": "false",
+        "columns": ",".join([
+            f"{col} = NULLIF({col}, '\\\\N')"
+            for col in columns.values()
+        ]),
         "Content-Type": "text/plain; charset=UTF-8",
         "Content-Length": str(os.path.getsize(csv_path)),
         "Expect": "100-continue"
@@ -54,9 +61,18 @@ def stream_load(csv_path, columns, table_name):
                 timeout=600
             )
 
-        end_time = time.time()   # ⏱ fin
+        # ⏱ Fin medición
+        end_time = time.perf_counter()
         elapsed = end_time - start_time
-        mins, secs = divmod(elapsed, 60)
+
+        # 🔹 Métricas de tiempo
+        elapsed_seconds = elapsed
+        total_ms = int(elapsed * 1000)
+
+        hours = int(elapsed // 3600)
+        minutes = int((elapsed % 3600) // 60)
+        seconds = int(elapsed % 60)
+        milliseconds = int((elapsed - int(elapsed)) * 1000)
 
         print("Respuesta StarRocks:")
         print(response.text)
@@ -66,11 +82,15 @@ def stream_load(csv_path, columns, table_name):
         if resp_json.get("Status") != "Success":
             raise Exception(f"Stream Load falló: {resp_json.get('Message')}")
 
-        print(
-            f"Stream Load exitoso: "
-            f"{resp_json.get('NumberLoadedRows')} filas cargadas "
-            f"en {int(mins)} min {secs:.2f} seg"
-        )
+        loaded_rows = int(resp_json.get("NumberLoadedRows", 0))
+
+        print("\n========= RESULTADO STREAM LOAD =========")
+        print(f"Filas cargadas       : {loaded_rows}")
+        print(f"Tiempo exacto        : {elapsed_seconds:.3f} segundos")
+        print(f"Tiempo formateado    : {hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}")
+        print(f"Total milisegundos   : {total_ms} ms")
+        print("=========================================\n")
+
     finally:
         if os.path.exists(csv_path):
             os.remove(csv_path)

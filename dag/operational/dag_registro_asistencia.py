@@ -3,15 +3,17 @@ from airflow import DAG  # type: ignore
 from airflow.operators.python import PythonOperator # type: ignore
 from datetime import datetime
 from pipelines.operational.rrhh.registro_asistencia.load import load
+import pendulum # type: ignore
 
 default_args = {"owner": "RRHH", "retries": 1}
+local_tz = pendulum.timezone("America/Lima")
 
 # DAG
 with DAG(
     dag_id="RegistroAsistencia",
     description="Sincronizacion de registro de asistencia de cada empleado",
     default_args=default_args,
-    start_date=datetime(2025, 1, 1),
+    start_date=datetime(2025, 1, 1, tzinfo=local_tz),
     # schedule_interval = "*/2 * * * 1-6",
     schedule_interval = "*/2 6-10,17-19 * * 1-6",
     catchup=False,
