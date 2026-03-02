@@ -16,6 +16,6 @@ with DAG(
 ) as dag:
 
     run_task = PythonOperator(
-        task_id="stream_load",
+        task_id="DimProducto",
         python_callable = load
     )
