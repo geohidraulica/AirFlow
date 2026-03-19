@@ -10,7 +10,7 @@ COLUMN_MAPPING = {
     'F_CODIGO_PRODUCTO': 'IdDimProducto',
     'F_TIPO_MOVIMIENTO': 'IdDimTipoMovimiento',
     'F_COD_COSTOS': 'IdDimCentroCosto',
-    'F_IDEQUIPO': 'IdEquipoBomba',
+    'F_IDEQUIPO': 'IdDimEquipoBomba',
     'F_IDORDENTRABAJO': 'IdDimOrdenTrabajo',
     'F_CANTIDAD': 'CantidadKardex',
     'F_PRECIO_UNITARIO_SOL': 'PrecioUnitario',

@@ -229,28 +229,18 @@ UPDATE_RECIBIDO_QUERY = """
 	UPDATE ca20 
 	SET EstadoDoc = (
 		SELECT 
-			CASE
-				-- No hay detalles
-				WHEN COUNT(de20.id_oc) = 0 THEN ca20.EstadoDoc
-
-				-- PRIORIDAD: si existe al menos un 5 → 5
-				WHEN COUNT(CASE WHEN de20.Estado = 5 THEN 1 END) > 0 THEN 5
-
-				-- Combinación 6 + 18 (sin otros estados) → 5
-				WHEN COUNT(CASE WHEN de20.Estado IN (6,18) THEN 1 END) > 0
-					 AND COUNT(CASE WHEN de20.Estado NOT IN (6,18) THEN 1 END) = 0
-					 AND COUNT(DISTINCT de20.Estado) > 1 THEN 5
-
-				-- Todos son 18
-				WHEN COUNT(DISTINCT de20.Estado) = 1
-					 AND MAX(de20.Estado) = 18 THEN 18
-
-				-- Todos iguales (3,6,17) → no cambiar
-				WHEN COUNT(DISTINCT de20.Estado) = 1 THEN ca20.EstadoDoc
-
-				-- default
-				ELSE ca20.EstadoDoc
-			END
+		CASE
+			WHEN COUNT(de20.id_oc) = 0 THEN ca20.EstadoDoc
+			WHEN COUNT(CASE WHEN de20.Estado = 5 THEN 1 END) > 0 THEN 5
+			WHEN COUNT(DISTINCT de20.Estado) = 1 AND MAX(de20.Estado) = 6 THEN 6
+			WHEN COUNT(DISTINCT de20.Estado) = 1 AND MAX(de20.Estado) = 3 THEN 3
+			WHEN COUNT(DISTINCT de20.Estado) = 1 AND MAX(de20.Estado) = 17 THEN 17
+			WHEN COUNT(CASE WHEN de20.Estado IN (6,18) THEN 1 END) > 0
+				AND COUNT(CASE WHEN de20.Estado NOT IN (6,18) THEN 1 END) = 0
+				AND COUNT(DISTINCT de20.Estado) > 1 THEN 5
+			WHEN COUNT(DISTINCT de20.Estado) = 1 AND MAX(de20.Estado) = 18 THEN 16
+			ELSE ca20.EstadoDoc
+		END
 		FROM de20
 		WHERE de20.id_oc = CA20.Y20005
 		AND DE20.Estado <> 3

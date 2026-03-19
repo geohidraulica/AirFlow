@@ -7,7 +7,7 @@ TMP_CSV = get_tmp_csv(JOB_NAME)
 COLUMN_MAPPING = {
     'idtareodet': 'IdFactTareo',
     'idfecha_tad': 'IdDimFechaTareo',
-    'idactivo_tad': 'IdEquipoBomba',
+    'idactivo_tad': 'IdDimEquipoBomba',
     'idsite_td': 'IdDimSite',
     'id_zona': 'IdDimZona',
     'id_nivel': 'IdDimNivel',

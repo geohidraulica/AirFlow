@@ -12,7 +12,7 @@ COLUMN_MAPPING = {
     'F_IDOTCAB': 'IdDimOrdenTrabajo',
     'F_ESTADOITEMOT': 'IdDimEstadoItemOt',
     'F_PRODUCTO': 'IdDimProducto',
-    'F_EQUIPO': 'IdEquipoBomba',
+    'F_EQUIPO': 'IdDimEquipoBomba',
     'F_CANT_SOLI': 'CantidadSolicitada',
     'F_CANT_ATEN': 'CantidadAtendida',
 }
@@ -34,7 +34,7 @@ SELECT_ORIGEN = """
     INNER JOIN MTTO.activos on MTTO.activos.idactivos = MTTO.orden_trabajo_cab.ot_bomba --AND MTTO.activos.idordentrabajocab_a = MTTO.orden_trabajo_cab.id_orden_trab_cab 
     INNER JOIN MA00 ESTADOOTDET ON ESTADOOTDET.codigo = ISNULL(MTTO.orden_trabajo_det.otd_idestadodet, 1) AND ESTADOOTDET.clasif = 'MTTODESTADET'
     LEFT JOIN ma04 ON ma04.SEQMA04 = MTTO.orden_trabajo_det.otd_prdiddet
-    WHERE orden_trabajo_cab.ot_fech_sist >= '2023-01-01' --AND MTTO.activos.site_destino = '001'
+    WHERE orden_trabajo_cab.ot_fech_sist >= '2024-01-01' --AND MTTO.activos.site_destino = '001'
 """
 
 TABLA_DESTINO = "FactMantenimiento"

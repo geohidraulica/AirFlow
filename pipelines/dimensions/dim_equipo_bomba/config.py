@@ -5,7 +5,7 @@ JOB_NAME = "dim_equipo_bomba"
 TMP_CSV = get_tmp_csv(JOB_NAME)
 
 COLUMN_MAPPING = {
-    'idactivos': 'IdEquipoBomba',
+    'idactivos': 'IdDimEquipoBomba',
     'F_CodigoBomba': 'CodigoEquipo',
     'F_Tipo': 'TipoEquipo',
     'F_Potencia': 'PotenciaEquipo',
