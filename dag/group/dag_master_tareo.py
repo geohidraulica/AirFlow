@@ -1,12 +1,35 @@
-from airflow import DAG # type: ignore
-from airflow.utils.task_group import TaskGroup # type: ignore
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator # type: ignore
-from datetime import datetime
-import pendulum # type: ignore
+from airflow import DAG #type: ignore
+from airflow.utils.task_group import TaskGroup #type: ignore
+from airflow.operators.python import PythonOperator #type: ignore
+from datetime import datetime 
+import pendulum #type: ignore
 
+from pipelines.dimensions.dim_equipo_bomba.load import load as load_equipo
+from pipelines.dimensions.dim_site.load import load as load_site
+from pipelines.dimensions.dim_zona.load import load as load_zona
+from pipelines.dimensions.dim_nivel.load import load as load_nivel
+from pipelines.dimensions.dim_poza.load import load as load_poza
+from pipelines.dimensions.dim_estado_bomba.load import load as load_estado_bomba
+from pipelines.dimensions.dim_periodo_tareo.load import load as load_periodo
+from pipelines.dimensions.dim_area_tareo.load import load as load_area
+from pipelines.dimensions.dim_cable_bomba.load import load as load_cable
 
-default_args = {"owner": "StarRocks","retries": 0}
+from pipelines.facts.fact_tareo.load import load as load_fact
+
+default_args = {"owner": "StarRocks", "retries": 0}
 local_tz = pendulum.timezone("America/Lima")
+
+DIMENSIONS = {
+    "DimEquipoBomba": load_equipo,
+    "DimSite": load_site,
+    "DimZona": load_zona,
+    "DimNivel": load_nivel,
+    "DimPoza": load_poza,
+    "DimEstadoBomba": load_estado_bomba,
+    "DimPeriodoTareo": load_periodo,
+    "DimAreaTareo": load_area,
+    "DimCableBomba": load_cable,
+}
 
 with DAG(
     dag_id="MasterTareo",
@@ -15,79 +38,20 @@ with DAG(
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
     schedule_interval=None,
     catchup=False,
-    tags=["StarRocks", "Group"],
+    max_active_tasks=5,
+    tags=["StarRocks", "Master"],
 ) as dag:
 
     with TaskGroup("dimensiones") as dimensiones:
+        for name, func in DIMENSIONS.items():
+            PythonOperator(
+                task_id=name,
+                python_callable=func
+            )
 
-        DimEquipoBomba = TriggerDagRunOperator(
-            task_id="DimEquipoBomba",
-            trigger_dag_id="DimEquipoBomba",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimSite = TriggerDagRunOperator(
-            task_id="DimSite",
-            trigger_dag_id="DimSite",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimZona = TriggerDagRunOperator(
-            task_id="DimZona",
-            trigger_dag_id="DimZona",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimNivel = TriggerDagRunOperator(
-            task_id="DimNivel",
-            trigger_dag_id="DimNivel",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimPoza = TriggerDagRunOperator(
-            task_id="DimPoza",
-            trigger_dag_id="DimPoza",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimEstadoBomba = TriggerDagRunOperator(
-            task_id="DimEstadoBomba",
-            trigger_dag_id="DimEstadoBomba",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimPeriodoTareo = TriggerDagRunOperator(
-            task_id="DimPeriodoTareo",
-            trigger_dag_id="DimPeriodoTareo",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimAreaTareo = TriggerDagRunOperator(
-            task_id="DimAreaTareo",
-            trigger_dag_id="DimAreaTareo",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimCableBomba = TriggerDagRunOperator(
-            task_id="DimCableBomba",
-            trigger_dag_id="DimCableBomba",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-    FactTareo = TriggerDagRunOperator(
+    FactTareo = PythonOperator(
         task_id="FactTareo",
-        trigger_dag_id="FactTareo",
-        wait_for_completion=True,
-        poke_interval=5,
+        python_callable=load_fact
     )
 
     dimensiones >> FactTareo

@@ -1,51 +1,43 @@
 from airflow import DAG # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
 from airflow.operators.python import PythonOperator # type: ignore
-from datetime import datetime 
+from datetime import datetime
 import pendulum # type: ignore
 
-from pipelines.dimensions.dim_tipo_movimiento.load import load as load_tipo_mov
-from pipelines.dimensions.dim_centro_costo.load import load as load_centro_costo
-from pipelines.dimensions.dim_orden_trabajo.load import load as load_ot
-from pipelines.dimensions.dim_equipo_bomba.load import load as load_equipo
+from pipelines.dimensions.dim_partlist.load import load as load_partlist
 from pipelines.dimensions.dim_producto.load import load as load_producto
 
-from pipelines.facts.fact_kardex.load import load as load_fact
+from pipelines.facts.fact_partlist_detalle.load import load as load_fact
 
 default_args = {"owner": "StarRocks", "retries": 0}
 local_tz = pendulum.timezone("America/Lima")
 
 DIMENSIONS = {
-    "DimTipoMovimiento": load_tipo_mov,
-    "DimCentroCosto": load_centro_costo,
-    "DimOrdenTrabajo": load_ot,
-    "DimEquipoBomba": load_equipo,
+    "DimPartList": load_partlist,
     "DimProducto": load_producto,
-    # "BridgeEquipoxOt": load_bridge,
 }
 
 with DAG(
-    dag_id="MasterKardex",
-    description="Ejecuta todas las tablas relacionadas para el reporte kardex",
+    dag_id="MasterPartList",
+    description="Ejecuta todas las tablas relacionadas para el reporte de partlist detalle",
     default_args=default_args,
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
-    schedule_interval=None,
+    schedule_interval="0 10,12,16 * * 1-5",
     catchup=False,
     max_active_tasks=5,
     tags=["StarRocks", "Master"],
 ) as dag:
 
     with TaskGroup("dimensiones") as dimensiones:
-
         for name, func in DIMENSIONS.items():
             PythonOperator(
                 task_id=name,
                 python_callable=func
             )
 
-    FactKardex = PythonOperator(
-        task_id="FactKardex",
+    FactPartListDetalle = PythonOperator(
+        task_id="FactPartListDetalle",
         python_callable=load_fact
     )
 
-    dimensiones >> FactKardex
+    dimensiones >> FactPartListDetalle

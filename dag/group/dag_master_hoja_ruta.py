@@ -4,32 +4,31 @@ from airflow.operators.python import PythonOperator # type: ignore
 from datetime import datetime 
 import pendulum # type: ignore
 
-from pipelines.dimensions.dim_tipo_movimiento.load import load as load_tipo_mov
-from pipelines.dimensions.dim_centro_costo.load import load as load_centro_costo
-from pipelines.dimensions.dim_orden_trabajo.load import load as load_ot
-from pipelines.dimensions.dim_equipo_bomba.load import load as load_equipo
 from pipelines.dimensions.dim_producto.load import load as load_producto
+from pipelines.dimensions.dim_equipo_bomba.load import load as load_equipo_bomba
+from pipelines.dimensions.dim_orden_fabricacion.load import load as load_of
+from pipelines.dimensions.dim_maquina_produccion.load import load as load_maquina_produccion
+from pipelines.dimensions.dim_servicio.load import load as load_servicio
 
-from pipelines.facts.fact_kardex.load import load as load_fact
+from pipelines.facts.fact_hoja_ruta.load import load as load_fact
 
 default_args = {"owner": "StarRocks", "retries": 0}
 local_tz = pendulum.timezone("America/Lima")
 
 DIMENSIONS = {
-    "DimTipoMovimiento": load_tipo_mov,
-    "DimCentroCosto": load_centro_costo,
-    "DimOrdenTrabajo": load_ot,
-    "DimEquipoBomba": load_equipo,
     "DimProducto": load_producto,
-    # "BridgeEquipoxOt": load_bridge,
+    "DimEquipoBomba": load_equipo_bomba,
+    "DimOrdenFabricacion": load_of,
+    "DimMaquinaProduccion": load_maquina_produccion,
+    "DimServicio": load_servicio,
 }
 
 with DAG(
-    dag_id="MasterKardex",
-    description="Ejecuta todas las tablas relacionadas para el reporte kardex",
+    dag_id="MasterHojaRuta",
+    description="Ejecuta todas las tablas relacionadas para el reporte hoja de ruta",
     default_args=default_args,
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
-    schedule_interval=None,
+    schedule_interval="0 7-19 * * 1-5",
     catchup=False,
     max_active_tasks=5,
     tags=["StarRocks", "Master"],
@@ -43,9 +42,9 @@ with DAG(
                 python_callable=func
             )
 
-    FactKardex = PythonOperator(
-        task_id="FactKardex",
+    FactHojaRuta = PythonOperator(
+        task_id="FactHojaRuta",
         python_callable=load_fact
     )
 
-    dimensiones >> FactKardex
+    dimensiones >> FactHojaRuta

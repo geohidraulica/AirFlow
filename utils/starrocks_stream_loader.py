@@ -5,7 +5,7 @@ import requests
 from config.settings import CONFIG
 from utils.mysql_manager import MySQLManager
 from config.mysql_connector import MySQLConnector
-
+import uuid
 
 def stream_load(csv_path, columns, table_name):
     """
@@ -39,7 +39,7 @@ def stream_load(csv_path, columns, table_name):
 
     headers = {
         "Authorization": f"Basic {auth_base64}",
-        "label": f"{table_name}_{int(time.time())}",
+        "label": f"{table_name}_{uuid.uuid4().hex}",
         "format": "csv",
         "column_separator": "|",
         "strict_mode": "false",

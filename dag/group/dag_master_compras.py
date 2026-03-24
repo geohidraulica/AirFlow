@@ -1,12 +1,37 @@
 from airflow import DAG # type: ignore
 from airflow.utils.task_group import TaskGroup # type: ignore
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator # type: ignore
+from airflow.operators.python import PythonOperator # type: ignore
 from datetime import datetime
 import pendulum # type: ignore
 
+from pipelines.dimensions.dim_estado_compra.load import load as load_estado
+from pipelines.dimensions.dim_flujo_compra.load import load as load_flujo
+from pipelines.dimensions.dim_forma_pago.load import load as load_forma_pago
+from pipelines.dimensions.dim_moneda.load import load as load_moneda
+from pipelines.dimensions.dim_personal.load import load as load_personal
+from pipelines.dimensions.dim_producto.load import load as load_producto
+from pipelines.dimensions.dim_proveedor.load import load as load_proveedor
+from pipelines.dimensions.dim_site.load import load as load_site
+from pipelines.dimensions.dim_tipo_proyecto.load import load as load_tipo_proyecto
+from pipelines.dimensions.dim_tipo_requerimiento.load import load as load_tipo_req
 
-default_args = {"owner": "StarRocks","retries": 0}
+from pipelines.facts.fact_compras.load import load as load_fact
+
+default_args = {"owner": "StarRocks", "retries": 0}
 local_tz = pendulum.timezone("America/Lima")
+
+DIMENSIONS = {
+    "DimEstadoCompra": load_estado,
+    "DimFlujoCompra": load_flujo,
+    "DimFormaPago": load_forma_pago,
+    "DimMoneda": load_moneda,
+    "DimPersonal": load_personal,
+    "DimProducto": load_producto,
+    "DimProveedor": load_proveedor,
+    "DimSite": load_site,
+    "DimTipoProyecto": load_tipo_proyecto,
+    "DimTipoRequerimiento": load_tipo_req,
+}
 
 with DAG(
     dag_id="MasterCompras",
@@ -15,86 +40,21 @@ with DAG(
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
     schedule_interval="0 7,11,15 * * 1-5",
     catchup=False,
-    tags=["StarRocks", "Group"],
+    max_active_tasks=5,
+    tags=["StarRocks", "Master"],
 ) as dag:
 
     with TaskGroup("dimensiones") as dimensiones:
 
-        DimEstadoCompra = TriggerDagRunOperator(
-            task_id="DimEstadoCompra",
-            trigger_dag_id="DimEstadoCompra",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
+        for name, func in DIMENSIONS.items():
+            PythonOperator(
+                task_id=name,
+                python_callable=func
+            )
 
-        DimFlujoCompra = TriggerDagRunOperator(
-            task_id="DimFlujoCompra",
-            trigger_dag_id="DimFlujoCompra",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimFormaPago = TriggerDagRunOperator(
-            task_id="DimFormaPago",
-            trigger_dag_id="DimFormaPago",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimMoneda = TriggerDagRunOperator(
-            task_id="DimMoneda",
-            trigger_dag_id="DimMoneda",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimPersonal = TriggerDagRunOperator(
-            task_id="DimPersonal",
-            trigger_dag_id="DimPersonal",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimProducto = TriggerDagRunOperator(
-            task_id="DimProducto",
-            trigger_dag_id="DimProducto",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimProveedor = TriggerDagRunOperator(
-            task_id="DimProveedor",
-            trigger_dag_id="DimProveedor",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimSite = TriggerDagRunOperator(
-            task_id="DimSite",
-            trigger_dag_id="DimSite",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimTipoProyecto = TriggerDagRunOperator(
-            task_id="DimTipoProyecto",
-            trigger_dag_id="DimTipoProyecto",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-        DimTipoRequerimiento = TriggerDagRunOperator(
-            task_id="DimTipoRequerimiento",
-            trigger_dag_id="DimTipoRequerimiento",
-            wait_for_completion=True,
-            poke_interval=5,
-        )
-
-    FactCompras = TriggerDagRunOperator(
+    FactCompras = PythonOperator(
         task_id="FactCompras",
-        trigger_dag_id="FactCompras",
-        wait_for_completion=True,
-        poke_interval=5,
+        python_callable=load_fact
     )
 
     dimensiones >> FactCompras
