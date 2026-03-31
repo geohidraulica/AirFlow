@@ -19,7 +19,7 @@ SELECT_ORIGEN = """
     SELECT
         ma04.SEQMA04,
         ma04.Y04001,
-        ma04.Y04002,
+        UPPER(ma04.Y04002) AS Y04002,
         UPPER(asubpp.descrip) AS familia,
         UPPER(dbo.arbol.descrip) AS subfamilia,
         UPPER(nomclase) as pieza,

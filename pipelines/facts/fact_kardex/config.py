@@ -12,6 +12,7 @@ COLUMN_MAPPING = {
     'F_COD_COSTOS': 'IdDimCentroCosto',
     'F_IDEQUIPO': 'IdDimEquipoBomba',
     'F_IDORDENTRABAJO': 'IdDimOrdenTrabajo',
+    'F_IDORDDENFABRICACION': 'IdDimOrdenFabricacion',
     'F_CANTIDAD': 'CantidadKardex',
     'F_PRECIO_UNITARIO_SOL': 'PrecioUnitario',
 }
@@ -25,6 +26,7 @@ SELECT_ORIGEN = """
         DE10.CodCostos AS F_COD_COSTOS,
         activos2.idactivos AS F_IDEQUIPO,
         MTTO.orden_trabajo_cab.id_orden_trab_cab AS F_IDORDENTRABAJO,
+        PROD.orden_fabri_cab.idordenfabricab AS F_IDORDDENFABRICACION,
         --CAST(DE10.Y10079 * DE10.PrecioUnitario_Soles AS DECIMAL(18,2)) AS SUB_TOTAL_SOL,
         DE10.Y10079 AS F_CANTIDAD,
         DE10.PrecioUnitario_Soles AS F_PRECIO_UNITARIO_SOL
@@ -37,6 +39,8 @@ SELECT_ORIGEN = """
     ---Jhon
     LEFT JOIN MTTO.orden_trabajo_cab ON CAST(MTTO.orden_trabajo_cab.id_orden_trab_fis_cab AS varchar(100)) = CAST(CA10.WONUM AS varchar(100))
     LEFT JOIN MTTO.activos activos2 ON Isnull(CA10.MODELOAUX, DE10.SEQEQUIPO) = activos2.codsmg
+    LEFT JOIN PROD.of_pterminado ON idofpterminado_de10 = PROD.of_pterminado.idofpterminado
+    LEFT JOIN PROD.orden_fabri_cab ON idordenfabricab_ofpt = PROD.orden_fabri_cab.idordenfabricab
     WHERE
     de10.Y10073 = '001'
 """

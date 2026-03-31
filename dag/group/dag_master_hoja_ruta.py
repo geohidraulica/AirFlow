@@ -31,16 +31,23 @@ with DAG(
     schedule_interval="0 7-19 * * 1-5",
     catchup=False,
     max_active_tasks=5,
+    max_active_runs=1,
     tags=["StarRocks", "Master"],
 ) as dag:
 
     with TaskGroup("dimensiones") as dimensiones:
+        prev_task = None
 
         for name, func in DIMENSIONS.items():
-            PythonOperator(
+            task = PythonOperator(
                 task_id=name,
                 python_callable=func
             )
+
+            if prev_task:
+                prev_task >> task
+
+            prev_task = task
 
     FactHojaRuta = PythonOperator(
         task_id="FactHojaRuta",

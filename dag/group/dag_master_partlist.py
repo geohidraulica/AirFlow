@@ -7,6 +7,7 @@ import pendulum # type: ignore
 from pipelines.dimensions.dim_partlist.load import load as load_partlist
 from pipelines.dimensions.dim_producto.load import load as load_producto
 
+from pipelines.facts.fact_stock_producto.load import load as load_stock
 from pipelines.facts.fact_partlist_detalle.load import load as load_fact
 
 default_args = {"owner": "StarRocks", "retries": 0}
@@ -15,6 +16,10 @@ local_tz = pendulum.timezone("America/Lima")
 DIMENSIONS = {
     "DimPartList": load_partlist,
     "DimProducto": load_producto,
+}
+
+INTERMEDIATE = {
+    "FactStockProducto": load_stock
 }
 
 with DAG(
@@ -29,7 +34,21 @@ with DAG(
 ) as dag:
 
     with TaskGroup("dimensiones") as dimensiones:
+        
+        prev_task = None
+
         for name, func in DIMENSIONS.items():
+            task = PythonOperator(
+                task_id=name,
+                python_callable=func
+            )
+            if prev_task:
+                prev_task >> task
+
+            prev_task = task
+
+    with TaskGroup("proceso_intermedio") as proceso_intermedio:
+        for name, func in INTERMEDIATE.items():
             PythonOperator(
                 task_id=name,
                 python_callable=func
@@ -40,4 +59,4 @@ with DAG(
         python_callable=load_fact
     )
 
-    dimensiones >> FactPartListDetalle
+    dimensiones >> proceso_intermedio >> FactPartListDetalle
